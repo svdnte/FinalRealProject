@@ -1,12 +1,15 @@
 package com.example.aaa;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.google.android.material.color.MaterialColors;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -94,7 +97,7 @@ public class CustomAdapter extends BaseAdapter {
         if (selectedItems.contains((int) us.getId())) {
             view.setBackgroundColor(context.getColor(R.color.selected_item_background));
         } else {
-            view.setBackgroundColor(context.getColor(com.google.android.material.R.color.design_default_color_surface));
+            view.setBackgroundColor(MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface, Color.WHITE));
         }
         String name;
         if (us.getAnon() == 1) {
@@ -135,7 +138,10 @@ public class CustomAdapter extends BaseAdapter {
         } else {
             selectedItems.remove((Integer) (int) id);
         }
+    }
 
+    public void clearSelected(){
+        selectedItems.clear();
     }
 }
 

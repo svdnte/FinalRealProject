@@ -123,6 +123,12 @@ public class DBUsers {
         database.delete(TABLE_NAME, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
+    public void deleteSome(Object[] ids) {
+        for (Object i: ids) {
+            delete((int) i);
+        }
+    }
+
 
     private static class DBHelper extends SQLiteOpenHelper {
         DBHelper(Context context) {

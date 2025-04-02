@@ -5,5 +5,5 @@
     <color name="purple">#6200FF</color>
     <color name="light_purple">#AB7FFF</color>
     <color name="custom_text_color">#FF000000</color>
-    <color name="selected_item_background">#1F000000</color>
+    <color name="selected_item_background">#32FFFFFF</color>
 </resources>

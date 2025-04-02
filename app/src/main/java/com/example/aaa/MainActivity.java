@@ -34,6 +34,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
@@ -161,6 +164,25 @@ public class MainActivity extends AppCompatActivity {
 
             return true;
         });
+
+        deleteBtn.setOnClickListener(view -> {
+            new AlertDialog.Builder(mContext).setTitle("Подтверждение удаления").
+                    setMessage("Вы уверены, что хотите удалить данные пользователя?")
+                    .setNegativeButton("Отмена", null)
+                    .setPositiveButton("Удалить", (dialog, which) -> {
+                        dbConnector.deleteSome(customAdapter.getSelectedItems().toArray());
+                        customAdapter.clearSelected();
+                        switcher.setDisplayedChild(0);
+                        selectedMenuWorking = false;
+                        customAdapter.setArrayMyData(dbConnector.selectAll());
+                        customAdapter.notifyDataSetChanged();
+                        customAdapter.notifyDataSetInvalidated();
+                        dataChanged();
+                        Toast.makeText(mContext, "Успешно удалено", Toast.LENGTH_SHORT).show();
+                        ;})
+                    .setCancelable(false)
+                    .show();
+        });
     }
 
     @Override
@@ -170,7 +192,6 @@ public class MainActivity extends AppCompatActivity {
         lenText.setText(String.valueOf(customAdapter.getLength()));
         super.onResume();
     }
-
     private void updateList() {
         customAdapter.setArrayMyData(dbConnector.selectAll());
         customAdapter.notifyDataSetChanged();
@@ -179,6 +200,11 @@ public class MainActivity extends AppCompatActivity {
     private void updateList(String request) {
         customAdapter.setArrayMyData(dbConnector.select(request));
         customAdapter.notifyDataSetChanged();
+    }
+
+    private void dataChanged(){
+        sumText.setText(String.valueOf(customAdapter.getSum()));
+        lenText.setText(String.valueOf(customAdapter.getLength()));
     }
 
     @Override
