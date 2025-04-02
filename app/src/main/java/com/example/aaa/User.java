@@ -1,6 +1,8 @@
 package com.example.aaa;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private long id, date;
     private int anon, sum, meth;
     private String surname, name, otch, info;

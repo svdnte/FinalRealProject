@@ -1,6 +1,8 @@
 package com.example.aaa;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -11,6 +13,7 @@ import android.widget.RadioButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -55,7 +58,20 @@ public class AddActivity extends AppCompatActivity {
         backButton = findViewById(R.id.back);
         anonCheckBox = findViewById(R.id.anon_check_box);
 
-        backButton.setOnClickListener(v -> finish());
+        backButton.setOnClickListener(v -> {
+            if (anonCheckBox.isChecked() || !surnameEdit.getText().toString().isEmpty() ||
+            !nameEdit.getText().toString().isEmpty() || !otchEdit.getText().toString().isEmpty() ||
+            !sumEdit.getText().toString().isEmpty() || !infoEdit.getText().toString().isEmpty()) {
+                new AlertDialog.Builder(mContext).setTitle("Подтверждение выхода").
+                        setMessage("Данные не сохранены. Вы уверены, что хотите выйти?")
+                        .setPositiveButton("Остаться", null)
+                        .setNegativeButton("Выйти", (dialog, which) -> finish())
+                        .setCancelable(false)
+                        .show();
+            } else {
+                finish();
+            }
+        });
         anonCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 surnameEdit.setEnabled(false);
@@ -71,31 +87,63 @@ public class AddActivity extends AppCompatActivity {
         nalRadio.setOnClickListener(v -> method = 0);
         cardRadio.setOnClickListener(v -> method = 1);
 
-        saveButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if ((!anonCheckBox.isChecked() && (surnameEdit.getText().toString().isEmpty() || nameEdit.getText().toString().isEmpty())) || sumEdit.getText().toString().isEmpty()
-                        || method == -1) {
-                    Toast.makeText(mContext, "Не все данные введены!", Toast.LENGTH_LONG).show();
+        saveButton.setOnClickListener(v -> {
+            if ((!anonCheckBox.isChecked() && (surnameEdit.getText().toString().isEmpty() || nameEdit.getText().toString().isEmpty())) || sumEdit.getText().toString().isEmpty()
+                    || method == -1) {
+                Toast.makeText(mContext, "Не все данные введены!", Toast.LENGTH_LONG).show();
+            } else {
+                int anon = anonCheckBox.isChecked() ? 1 : 0;
+                String name, surname, otch;
+                if (anon == 1) {
+                    name = "Аноним";
+                    surname = "";
+                    otch = "";
                 } else {
-                    int anon = anonCheckBox.isChecked() ? 1 : 0;
-                    String name, surname, otch;
-                    if (anon == 1) {
-                        name = "Аноним";
-                        surname = "";
-                        otch = "";
-                    } else {
-                        name = nameEdit.getText().toString();
-                        surname = surnameEdit.getText().toString();
-                        otch = otchEdit.getText().toString();
-                    }
-                    long date = new Date().getTime();
-                    dbConnector.insert(anon, surname, name,
-                            otch, date, Integer.parseInt(sumEdit.getText().toString()),
-                            infoEdit.getText().toString(), method);
-                    Toast.makeText(mContext, "Успешно добавлено!", Toast.LENGTH_LONG).show();
+                    name = nameEdit.getText().toString();
+                    surname = surnameEdit.getText().toString();
+                    otch = otchEdit.getText().toString();
+                }
+                long date = new Date().getTime();
+                dbConnector.insert(anon, surname, name,
+                        otch, date, Integer.parseInt(sumEdit.getText().toString()),
+                        infoEdit.getText().toString(), method);
+                Toast.makeText(mContext, "Успешно добавлено!", Toast.LENGTH_LONG).show();
+                clearAll();
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            void pattern(){
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+            @Override
+            public void handleOnBackPressed() {
+                if (anonCheckBox.isChecked() || !surnameEdit.getText().toString().isEmpty() ||
+                        !nameEdit.getText().toString().isEmpty() || !otchEdit.getText().toString().isEmpty() ||
+                        !sumEdit.getText().toString().isEmpty() || !infoEdit.getText().toString().isEmpty()) {
+                    new AlertDialog.Builder(mContext).setTitle("Подтверждение выхода").
+                            setMessage("Данные не сохранены. Вы уверены, что хотите выйти?")
+                            .setPositiveButton("Остаться", null)
+                            .setNegativeButton("Выйти", (dialog, which) -> pattern())
+                            .setCancelable(false)
+                            .show();
+                } else {
+                    pattern();
                 }
             }
         });
+    }
+
+    private void clearAll(){
+        nameEdit.setText("");
+        surnameEdit.setText("");
+        otchEdit.setText("");
+        anonCheckBox.setChecked(false);
+        nalRadio.setChecked(false);
+        cardRadio.setChecked(false);
+        infoEdit.setText("");
+        sumEdit.setText("");
+
     }
 }

@@ -1,5 +1,6 @@
 package com.example.aaa;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import com.google.android.material.snackbar.Snackbar;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.widget.SwitchCompat;
@@ -22,11 +24,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.ViewSwitcher;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,8 +46,12 @@ public class MainActivity extends AppCompatActivity {
     CustomSpinnerAdapter customSpinnerAdapter;
     Spinner spinner;
     SwitchCompat switchCompat;
+    Button deleteBtn;
+    ViewSwitcher switcher;
 
-    TextView sumText, lenText;
+    TextView sumText, lenText, selectedText;
+
+    private boolean selectedMenuWorking = false;
 
 
     @Override
@@ -56,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
         mContext = this;
         dbConnector = new DBUsers(this);
 
+        switcher = findViewById(R.id.viewSwitcher);
+        deleteBtn = findViewById(R.id.button_delete_view_switcher);
         searchView = findViewById(R.id.search_view);
         listView = findViewById(R.id.list_view);
         customAdapter = new CustomAdapter(mContext, dbConnector.selectAll());
@@ -64,12 +76,12 @@ public class MainActivity extends AppCompatActivity {
         switchCompat = findViewById(R.id.switch1);
         switchCompat.setChecked(true);
         updateList();
+        selectedText = findViewById(R.id.selectedCountView);
         sumText = findViewById(R.id.sumTextView);
         lenText = findViewById(R.id.lenTextView);
 
         sumText.setText(String.valueOf(customAdapter.getSum()));
         lenText.setText(String.valueOf(customAdapter.getLength()));
-
 
 
         Intent intent = new Intent(this, AddActivity.class);
@@ -109,30 +121,62 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        switchCompat.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                customAdapter.set_direction(isChecked);
+            public void onNothingSelected(AdapterView<?> parent) {
             }
         });
 
+        switchCompat.setOnCheckedChangeListener((buttonView, isChecked) -> customAdapter.set_direction(isChecked));
+
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            if (selectedMenuWorking) {
+                customAdapter.setSelected(id);
+                if (customAdapter.getSelectedCount() != 0) {
+                    switcher.setDisplayedChild(1);
+                    selectedText.setText("Выбрано элементов: " + customAdapter.getSelectedCount());
+                    selectedMenuWorking = true;
+                } else {
+                    switcher.setDisplayedChild(0);
+                    selectedMenuWorking = false;
+                }
+                customAdapter.notifyDataSetChanged();
+            } else {
+                Intent intent1 = new Intent(mContext, PersonActivity.class);
+                intent1.putExtra("USER", customAdapter.getItem(position));
+                startActivity(intent1);
+            }
+        });
+
+        listView.setOnItemLongClickListener((parent, view, position, id) -> {
+            customAdapter.setSelected(id);
+            if (customAdapter.getSelectedCount() != 0) {
+                switcher.setDisplayedChild(1);
+                selectedText.setText("Выбрано элементов: " + customAdapter.getSelectedCount());
+                selectedMenuWorking = true;
+            } else {
+                switcher.setDisplayedChild(0);
+                selectedMenuWorking = false;
+            }
+            customAdapter.notifyDataSetChanged();
+
+
+            return true;
+        });
     }
 
     @Override
     protected void onResume() {
         updateList();
+        sumText.setText(String.valueOf(customAdapter.getSum()));
+        lenText.setText(String.valueOf(customAdapter.getLength()));
         super.onResume();
     }
 
-    private void updateList () {
+    private void updateList() {
         customAdapter.setArrayMyData(dbConnector.selectAll());
         customAdapter.notifyDataSetChanged();
     }
 
-    private void updateList (String request) {
+    private void updateList(String request) {
         customAdapter.setArrayMyData(dbConnector.select(request));
         customAdapter.notifyDataSetChanged();
     }

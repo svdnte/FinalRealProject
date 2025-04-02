@@ -11,12 +11,15 @@ import android.widget.TextView;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 public class CustomAdapter extends BaseAdapter {
     Context context;
     Object[] userArrayList;
+    List<Integer> selectedItems = new LinkedList<>();
     LayoutInflater layoutInflater;
     String sort = "По алфавиту";
     boolean direction = false; // t - возрастанию, f - убыванию
@@ -33,8 +36,8 @@ public class CustomAdapter extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int position) {
-        return null;
+    public User getItem(int position) {
+        return (User) userArrayList[position];
     }
 
     @Override
@@ -88,6 +91,11 @@ public class CustomAdapter extends BaseAdapter {
             view = layoutInflater.inflate(R.layout.activity_list_view, null);
         }
         User us = (User) userArrayList[position];
+        if (selectedItems.contains((int) us.getId())) {
+            view.setBackgroundColor(context.getColor(R.color.selected_item_background));
+        } else {
+            view.setBackgroundColor(context.getColor(com.google.android.material.R.color.design_default_color_surface));
+        }
         String name;
         if (us.getAnon() == 1) {
             name = "Аноним";
@@ -96,7 +104,7 @@ public class CustomAdapter extends BaseAdapter {
         }
         ((TextView) view.findViewById(R.id.name_text_view)).setText(name);
 
-        String date = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(us.getDate() + 10800000L);
+        String date = new SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault()).format(us.getDate());
 
         ((TextView) view.findViewById(R.id.date_text_view)).setText(date);
 
@@ -111,6 +119,23 @@ public class CustomAdapter extends BaseAdapter {
             array[i] = array[array.length - 1 - i];
             array[array.length - 1 - i] = temp;
         }
+    }
+
+    public List<Integer> getSelectedItems(){
+        return selectedItems;
+    }
+
+    public int getSelectedCount(){
+        return selectedItems.size();
+    }
+
+    public void setSelected(long id) {
+        if (!selectedItems.contains((int) id)) {
+            selectedItems.add((int) id);
+        } else {
+            selectedItems.remove((Integer) (int) id);
+        }
+
     }
 }
 

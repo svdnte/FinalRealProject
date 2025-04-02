@@ -38,8 +38,7 @@ public class DBUsers {
     private static final int NUM_COLUMN_ANON = 1;
     private static final int NUM_COLUMN_METHOD = 8;
 
-
-    private SQLiteDatabase database;
+    private final SQLiteDatabase database;
 
     public DBUsers(Context context) {
         DBHelper dbHelper = new DBHelper(context);
@@ -114,6 +113,14 @@ public class DBUsers {
         Log.w("INSERT", Arrays.toString(arr.toArray()));
         mCursor.close();
         return arr.toArray();
+    }
+
+    public void deleteAll(){
+        database.delete(TABLE_NAME, null, null);
+    }
+
+    public void delete(long id){
+        database.delete(TABLE_NAME, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
 

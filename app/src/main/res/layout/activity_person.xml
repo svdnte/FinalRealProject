@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".PersonActivity">
+
+    <Button
+        android:id="@+id/backPersonActivity"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:text="Назад" />
+
+    <ImageView
+        android:id="@+id/iconView"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_gravity="center" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="20dp"/>
+
+    <TextView
+        android:id="@+id/fioEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        android:text="Фамилия Имя Отчество"
+        android:textColor="?android:attr/textColorPrimary"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:textSize="28sp"/>
+    
+    <TextView
+        android:id="@+id/sumPersonEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:gravity="center"
+        android:text="100 р."
+        android:textStyle="bold"
+        android:textColor="@color/purple"
+        android:textSize="38sp"/>
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="10dp">
+        
+        <TextView
+            android:id="@+id/datePersonEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12.06.2025 12:03"
+            android:textSize="26sp"
+            android:textStyle="bold"/>
+        
+        <TextView
+            android:id="@+id/methodPersonEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Наличные"
+            android:textSize="26sp"
+            android:layout_marginStart="15dp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/infoPersonEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Контактная информация: +79101234567"
+        android:layout_marginStart="30dp"
+        android:layout_marginEnd="30dp"
+        android:textSize="26dp"
+        android:textStyle="bold"/>
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/editPersonButton"
+            android:layout_width="160dp"
+            android:layout_height="60dp"
+            android:text="Изменить"
+            android:textSize="22sp"
+            android:layout_marginStart="30dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="40dp"/>
+
+        <Button
+            android:id="@+id/deletePersonButton"
+            android:layout_width="160dp"
+            android:layout_height="60dp"
+            android:text="Удалить"
+            android:textSize="22sp"
+            android:layout_marginTop="40dp"
+            android:layout_gravity=""/>
+
+    </GridLayout>
+</LinearLayout>
