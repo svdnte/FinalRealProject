@@ -7,6 +7,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -27,6 +31,7 @@ public class DBUsers {
     private static final String COLUMN_INFO = "Info";
     private static final String COLUMN_ANON = "Anon";
     private static final String COLUMN_METHOD = "Meth";
+    private static final String COLUMN_ABSOLUT_ID = "Abs_id";
 
     private static final int NUM_COLUMN_ID = 0;
     private static final int NUM_COLUMN_DATE = 5;
@@ -37,6 +42,7 @@ public class DBUsers {
     private static final int NUM_COLUMN_INFO = 7;
     private static final int NUM_COLUMN_ANON = 1;
     private static final int NUM_COLUMN_METHOD = 8;
+    private static final int NUM_COLUMN_ABSOLUT_ID = 9;
 
     private final SQLiteDatabase database;
 
@@ -46,7 +52,7 @@ public class DBUsers {
         Log.w("DATABASE", database.toString());
     }
 
-    public long insert(int anon, String surname, String name, String otch, long date, int sum, String info, int meth) {
+    public void insert(int anon, String surname, String name, String otch, long date, int sum, String info, int meth) {
         ContentValues cv = new ContentValues();
         cv.put(COLUMN_ANON, anon);
         cv.put(COLUMN_SURNAME, surname);
@@ -56,7 +62,17 @@ public class DBUsers {
         cv.put(COLUMN_SUM, sum);
         cv.put(COLUMN_INFO, info);
         cv.put(COLUMN_METHOD, meth);
-        return database.insert(TABLE_NAME, null, cv);
+
+        database.beginTransaction();
+        Cursor cursor = database.query(TABLE_NAME, new String[]{"surname", "name", "otch"},
+                "surname = ? AND name = ? AND otch = ?", new String[]{surname, name, otch}, null, null, null);
+
+        if (cursor.getCount() > 0) {
+            database.update("users", cv, "surname = ? AND name = ? AND otch = ?", new String[]{surname, name, otch});
+        } else {
+            database.insert(TABLE_NAME, null, cv);
+        }
+        cursor.close();
     }
 
     public Object[] select(String request) {
@@ -115,17 +131,38 @@ public class DBUsers {
         return arr.toArray();
     }
 
-    public void deleteAll(){
+    public void deleteAll() {
         database.delete(TABLE_NAME, null, null);
     }
 
-    public void delete(long id){
+    public void delete(long id) {
         database.delete(TABLE_NAME, COLUMN_ID + " = ?", new String[]{String.valueOf(id)});
     }
 
     public void deleteSome(Object[] ids) {
-        for (Object i: ids) {
+        for (Object i : ids) {
             delete((int) i);
+        }
+    }
+
+    public void saveProductsFromJson(JSONObject jsonObject) throws JSONException {
+        deleteAll();
+        JSONArray users = jsonObject.getJSONArray("users");
+
+        for (int i = 0; i < users.length(); i++) {
+            JSONObject user = users.getJSONObject(i);
+
+            int id = user.getInt("id");
+            int anon = user.getInt("anon");
+            String name = user.getString("name");
+            String surname = user.getString("surname");
+            String otch = user.getString("otch");
+            int date = user.getInt("date");
+            int sum = user.getInt("sum");
+            String info = user.getString("info");
+            int meth = user.getInt("meth");
+
+            this.insert(anon, surname, name, otch, date, sum, info, meth);
         }
     }
 
@@ -146,7 +183,8 @@ public class DBUsers {
                     COLUMN_DATE + " INTEGER, " +
                     COLUMN_SUM + " INTEGER, " +
                     COLUMN_INFO + " TEXT, " +
-                    COLUMN_METHOD + " INTEGER ); ";
+                    COLUMN_METHOD + " INTEGER, " +
+                    COLUMN_ABSOLUT_ID + " INTEGER ); ";
             db.execSQL(query);
         }
 

@@ -5,8 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import com.google.android.material.snackbar.Snackbar;
-
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
@@ -23,19 +22,32 @@ import com.example.aaa.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ListView;
-import android.widget.PopupMenu;
 import android.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okio.ByteString;
+import okio.GzipSource;
+import okio.GzipSource;
+import okio.Okio;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -179,7 +191,8 @@ public class MainActivity extends AppCompatActivity {
                         customAdapter.notifyDataSetInvalidated();
                         dataChanged();
                         Toast.makeText(mContext, "Успешно удалено", Toast.LENGTH_SHORT).show();
-                        ;})
+                        ;
+                    })
                     .setCancelable(false)
                     .show();
         });
@@ -192,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
         lenText.setText(String.valueOf(customAdapter.getLength()));
         super.onResume();
     }
+
     private void updateList() {
         customAdapter.setArrayMyData(dbConnector.selectAll());
         customAdapter.notifyDataSetChanged();
@@ -202,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
         customAdapter.notifyDataSetChanged();
     }
 
-    private void dataChanged(){
+    private void dataChanged() {
         sumText.setText(String.valueOf(customAdapter.getSum()));
         lenText.setText(String.valueOf(customAdapter.getLength()));
     }
@@ -224,9 +238,36 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        }
+        } else if (id == R.id.action_update) {
+            NetworkHelperClass apiClient = NetworkHelperClass.getInstance(mContext);
+            apiClient.get("/get_all", new NetworkHelperClass.JsonApiCallback() {
+                public void onSuccess(JSONObject response) {
+                    try {
+                        dbConnector.saveProductsFromJson(response.getJSONObject("tables"));
+                        customAdapter.setArrayMyData(dbConnector.selectAll());
+                        customAdapter.notifyDataSetChanged();
+                    } catch (Exception e) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(mContext, "Произошла ошибка!" + "\nСвяжитесь с @svdnte", Toast.LENGTH_LONG).show();
+                        });
+                        this.onFailure(new Throwable("failed save json to sql in main activity"));
+                    }
+                }
 
-        return super.onOptionsItemSelected(item);
+                @Override
+                public void onError(int statusCode, String message) {
+                    // Обработка ошибки от сервера
+                    Log.e("NETWORK_HELPER", "Error: " + statusCode + " - " + message);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    // Обработка ошибки сети/соединения
+                    Log.e("NETWORK_HELPER", "Failure: ", t);
+                }
+            });
+        }
+        return true;
     }
 
     @Override
@@ -234,5 +275,88 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    public static class NetworkHelperClass {
+        private static OkHttpClient client;
+        private static final int CONNECT_TIMEOUT = 15;
+        private static final int READ_TIMEOUT = 30;
+        private static final int WRITE_TIMEOUT = 15;
+        private final String baseUrl = "https://finalprojectbackend-oi8b.onrender.com";
+        private static NetworkHelperClass instance;
+
+        public NetworkHelperClass(Context context) {
+            // Настройка OkHttp клиента
+            client = new OkHttpClient.Builder()
+                    .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
+                    .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+                    .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
+                    .addNetworkInterceptor(new GzipInterceptor()) // Для ответов
+                    .build();
+        }
+
+        public static synchronized NetworkHelperClass getInstance(Context context) {
+            if (instance == null) {
+                instance = new NetworkHelperClass(context);
+            }
+            return instance;
+        }
+
+        public void get(String endpoint, JsonApiCallback callback) {
+            Request.Builder builder = new Request.Builder()
+                    .url(baseUrl + endpoint)
+                    .addHeader("Accept-Encoding", "gzip")
+                    .get();
+
+            Request request = builder.build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                    callback.onFailure(e);
+                }
+
+                @Override
+                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                    if (response.isSuccessful()) {
+                        try {
+                            String responseBody = response.body() != null ? response.body().string() : "";
+                            Log.w("WWWW", responseBody);
+                            Headers headers = response.headers();
+                            for (String name : headers.names()) {
+                                Log.d("HEADER", name + ": " + headers.get(name));
+                            }
+                            JSONObject json = new JSONObject(responseBody);
+                            callback.onSuccess(json);
+                        } catch (Exception e) {
+                            callback.onFailure(e);
+                        }
+                    } else {
+                        callback.onError(response.code(), response.message());
+                    }
+                }
+
+
+            });
+        }
+
+        private void onError(int code, String message) {
+        }
+
+        void onFailure(Exception e) {
+        }
+
+        public void onSuccess(JSONObject json) {
+        }
+
+
+
+        public interface JsonApiCallback {
+            void onSuccess(JSONObject response);
+
+            void onError(int statusCode, String message);
+
+            void onFailure(Throwable t);
+        }
     }
 }
