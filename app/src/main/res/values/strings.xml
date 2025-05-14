@@ -6,4 +6,7 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+    <string name="export">Экспортировать как</string>
+    <string name="json">JSON</string>
+    <string name="sql">SQL</string>
 </resources>
