@@ -8,6 +8,33 @@
         android:title="@string/action_settings"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_update"
-        android:title="Обновить"/>
+        android:id="@+id/action_save"
+        android:title="@string/save">
+        <menu>
+            <item
+                android:id="@+id/action_save_json"
+                android:title="@string/json"
+                />
+            <item
+                android:id="@+id/action_save_db"
+                android:title="@string/sql"
+                />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/action_export"
+        android:title="@string/export">
+        <menu>
+            <item
+                android:id="@+id/action_export_json"
+                android:title="@string/json"
+                />
+            <item
+                android:id="@+id/action_export_db"
+                android:title="@string/sql"
+                />
+        </menu>
+
+    </item>
 </menu>

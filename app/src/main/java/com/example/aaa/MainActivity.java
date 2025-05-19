@@ -3,15 +3,17 @@ package com.example.aaa;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.core.content.FileProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -30,24 +32,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.Headers;
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okio.ByteString;
-import okio.GzipSource;
-import okio.GzipSource;
-import okio.Okio;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.security.Permissions;
+import java.security.acl.Permission;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -67,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
     TextView sumText, lenText, selectedText;
 
     private boolean selectedMenuWorking = false;
+
+    private static final int REQUEST_CODE_SAVE_DB = 1001;
 
 
     @Override
@@ -176,7 +171,6 @@ public class MainActivity extends AppCompatActivity {
 
             return true;
         });
-
         deleteBtn.setOnClickListener(view -> {
             new AlertDialog.Builder(mContext).setTitle("Подтверждение удаления").
                     setMessage("Вы уверены, что хотите удалить данные пользователя?")
@@ -191,8 +185,7 @@ public class MainActivity extends AppCompatActivity {
                         customAdapter.notifyDataSetInvalidated();
                         dataChanged();
                         Toast.makeText(mContext, "Успешно удалено", Toast.LENGTH_SHORT).show();
-                        ;
-                    })
+                        ;})
                     .setCancelable(false)
                     .show();
         });
@@ -216,16 +209,16 @@ public class MainActivity extends AppCompatActivity {
         customAdapter.notifyDataSetChanged();
     }
 
-    private void dataChanged() {
-        sumText.setText(String.valueOf(customAdapter.getSum()));
-        lenText.setText(String.valueOf(customAdapter.getLength()));
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    private void dataChanged(){
+        sumText.setText(String.valueOf(customAdapter.getSum()));
+        lenText.setText(String.valueOf(customAdapter.getLength()));
     }
 
     @Override
@@ -238,36 +231,12 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        } else if (id == R.id.action_update) {
-            NetworkHelperClass apiClient = NetworkHelperClass.getInstance(mContext);
-            apiClient.get("/get_all", new NetworkHelperClass.JsonApiCallback() {
-                public void onSuccess(JSONObject response) {
-                    try {
-                        dbConnector.saveProductsFromJson(response.getJSONObject("tables"));
-                        customAdapter.setArrayMyData(dbConnector.selectAll());
-                        customAdapter.notifyDataSetChanged();
-                    } catch (Exception e) {
-                        runOnUiThread(() -> {
-                            Toast.makeText(mContext, "Произошла ошибка!" + "\nСвяжитесь с @svdnte", Toast.LENGTH_LONG).show();
-                        });
-                        this.onFailure(new Throwable("failed save json to sql in main activity"));
-                    }
-                }
-
-                @Override
-                public void onError(int statusCode, String message) {
-                    // Обработка ошибки от сервера
-                    Log.e("NETWORK_HELPER", "Error: " + statusCode + " - " + message);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    // Обработка ошибки сети/соединения
-                    Log.e("NETWORK_HELPER", "Failure: ", t);
-                }
-            });
+        } else if (id == R.id.action_save_db){
+            downloadDbFile();
+        } else if (id == R.id.action_export_db){
         }
-        return true;
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -277,86 +246,73 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-    public static class NetworkHelperClass {
-        private static OkHttpClient client;
-        private static final int CONNECT_TIMEOUT = 15;
-        private static final int READ_TIMEOUT = 30;
-        private static final int WRITE_TIMEOUT = 15;
-        private final String baseUrl = "https://finalprojectbackend-oi8b.onrender.com";
-        private static NetworkHelperClass instance;
+    private File getDatabaseFile() {
+        return getDatabasePath("database.db");
+    }
 
-        public NetworkHelperClass(Context context) {
-            // Настройка OkHttp клиента
-            client = new OkHttpClient.Builder()
-                    .connectTimeout(CONNECT_TIMEOUT, TimeUnit.SECONDS)
-                    .readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
-                    .writeTimeout(WRITE_TIMEOUT, TimeUnit.SECONDS)
-                    .addNetworkInterceptor(new GzipInterceptor()) // Для ответов
-                    .build();
+    private void downloadDbFile() {
+        // Получаем файл базы данных
+        File dbFile = getDatabaseFile();
+
+        if (dbFile.exists()) {
+            // Создаем Intent для создания документа
+            Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("application/x-sqlite3"); // MIME type для .db файлов
+            intent.putExtra(Intent.EXTRA_TITLE, "backup.db");
+
+            // Запускаем активность для выбора места сохранения
+            startActivityForResult(intent, REQUEST_CODE_SAVE_DB);
+        } else {
+            Toast.makeText(this, "Файл базы данных не найден", Toast.LENGTH_SHORT).show();
         }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
-        public static synchronized NetworkHelperClass getInstance(Context context) {
-            if (instance == null) {
-                instance = new NetworkHelperClass(context);
+        if (requestCode == REQUEST_CODE_SAVE_DB && resultCode == RESULT_OK) {
+            if (data != null && data.getData() != null) {
+                Uri destinationUri = data.getData();
+                copyDatabaseToDestination(destinationUri);
+                shareDbFile(destinationUri);
             }
-            return instance;
         }
+    }
+    private void copyDatabaseToDestination(Uri destinationUri) {
+        File dbFile = getDatabaseFile();
 
-        public void get(String endpoint, JsonApiCallback callback) {
-            Request.Builder builder = new Request.Builder()
-                    .url(baseUrl + endpoint)
-                    .addHeader("Accept-Encoding", "gzip")
-                    .get();
+        try (InputStream in = Files.newInputStream(dbFile.toPath());
+             OutputStream out = getContentResolver().openOutputStream(destinationUri)) {
 
-            Request request = builder.build();
-
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                    callback.onFailure(e);
+            if (out != null) {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
                 }
 
-                @Override
-                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                    if (response.isSuccessful()) {
-                        try {
-                            String responseBody = response.body() != null ? response.body().string() : "";
-                            Log.w("WWWW", responseBody);
-                            Headers headers = response.headers();
-                            for (String name : headers.names()) {
-                                Log.d("HEADER", name + ": " + headers.get(name));
-                            }
-                            JSONObject json = new JSONObject(responseBody);
-                            callback.onSuccess(json);
-                        } catch (Exception e) {
-                            callback.onFailure(e);
-                        }
-                    } else {
-                        callback.onError(response.code(), response.message());
-                    }
-                }
-
-
-            });
+                Toast.makeText(this, "База данных успешно сохранена", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Ошибка при экспорте базы данных", Toast.LENGTH_SHORT).show();
         }
+    }
 
-        private void onError(int code, String message) {
-        }
+    private void shareDbFile(Uri fileUri) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("application/x-sqlite3");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, fileUri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-        void onFailure(Exception e) {
-        }
+        shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Экспорт базы данных");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Прикреплен файл базы данных приложения");
 
-        public void onSuccess(JSONObject json) {
-        }
+        startActivity(Intent.createChooser(shareIntent, "Поделиться базой данных"));
+    }
 
+    private void exportDb(){
 
-
-        public interface JsonApiCallback {
-            void onSuccess(JSONObject response);
-
-            void onError(int statusCode, String message);
-
-            void onFailure(Throwable t);
-        }
     }
 }

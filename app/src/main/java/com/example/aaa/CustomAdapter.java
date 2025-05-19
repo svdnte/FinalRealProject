@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 public class CustomAdapter extends BaseAdapter {
     Context context;
@@ -59,19 +58,11 @@ public class CustomAdapter extends BaseAdapter {
     }
 
     private void sortThis(){
-        CompletableFuture<Object[]> sortingFuture = CompletableFuture.supplyAsync(() -> {
-            Object[] sortedArray = Arrays.copyOf(userArrayList, userArrayList.length);
-            Arrays.parallelSort(sortedArray, new Sorter(sort, direction));
-            return sortedArray;
-        });
-
-        sortingFuture.thenAccept(sortedArray -> {
-            userArrayList = sortedArray;
-            if (!direction) {
-                reverse(userArrayList);
-            }
-            notifyDataSetChanged();
-        });
+        Arrays.sort(userArrayList, new Sorter(sort, direction));
+        if (!direction) {
+            reverse(userArrayList);
+        }
+        this.notifyDataSetChanged();
     }
 
     public void setSort(String sort, boolean direction) {
@@ -106,9 +97,7 @@ public class CustomAdapter extends BaseAdapter {
         if (selectedItems.contains((int) us.getId())) {
             view.setBackgroundColor(context.getColor(R.color.selected_item_background));
         } else {
-            view.setBackgroundColor(MaterialColors.getColor(view,
-                    com.google.android.material.R.attr.colorSurface,
-                    Color.WHITE));
+            view.setBackgroundColor(MaterialColors.getColor(view, com.google.android.material.R.attr.colorSurface, Color.WHITE));
         }
         String name;
         if (us.getAnon() == 1) {
@@ -149,6 +138,7 @@ public class CustomAdapter extends BaseAdapter {
         } else {
             selectedItems.remove((Integer) (int) id);
         }
+
     }
 
     public void clearSelected(){
