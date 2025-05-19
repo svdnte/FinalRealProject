@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+// Кастомный адаптер для выпадающего списка
 public class CustomSpinnerAdapter extends BaseAdapter {
     Context context;
     LayoutInflater layoutInflater;

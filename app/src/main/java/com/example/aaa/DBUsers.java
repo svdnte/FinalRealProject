@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+// Класс базы данных
 public class DBUsers {
     private static final String DATABASE_NAME = "database.db";
     private static final int DATABASE_VERSION = 1;
@@ -72,6 +73,8 @@ public class DBUsers {
         } else {
             database.insert(TABLE_NAME, null, cv);
         }
+        database.setTransactionSuccessful();
+        database.endTransaction();
         cursor.close();
     }
 
@@ -145,26 +148,27 @@ public class DBUsers {
         }
     }
 
-    public void saveProductsFromJson(JSONObject jsonObject) throws JSONException {
-        deleteAll();
-        JSONArray users = jsonObject.getJSONArray("users");
-
-        for (int i = 0; i < users.length(); i++) {
-            JSONObject user = users.getJSONObject(i);
-
-            int id = user.getInt("id");
-            int anon = user.getInt("anon");
-            String name = user.getString("name");
-            String surname = user.getString("surname");
-            String otch = user.getString("otch");
-            int date = user.getInt("date");
-            int sum = user.getInt("sum");
-            String info = user.getString("info");
-            int meth = user.getInt("meth");
-
-            this.insert(anon, surname, name, otch, date, sum, info, meth);
-        }
-    }
+    // Наследие от попыток создать клиент-серверное приложение :)
+//    public void saveProductsFromJson(JSONObject jsonObject) throws JSONException {
+//        deleteAll();
+//        JSONArray users = jsonObject.getJSONArray("users");
+//
+//        for (int i = 0; i < users.length(); i++) {
+//            JSONObject user = users.getJSONObject(i);
+//
+//            int id = user.getInt("id");
+//            int anon = user.getInt("anon");
+//            String name = user.getString("name");
+//            String surname = user.getString("surname");
+//            String otch = user.getString("otch");
+//            int date = user.getInt("date");
+//            int sum = user.getInt("sum");
+//            String info = user.getString("info");
+//            int meth = user.getInt("meth");
+//
+//            this.insert(anon, surname, name, otch, date, sum, info, meth);
+//        }
+//    }
 
 
     private static class DBHelper extends SQLiteOpenHelper {

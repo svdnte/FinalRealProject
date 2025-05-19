@@ -19,13 +19,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+
+// Кастомный адаптер для list view
 public class CustomAdapter extends BaseAdapter {
     Context context;
     Object[] userArrayList;
     List<Integer> selectedItems = new LinkedList<>();
     LayoutInflater layoutInflater;
     String sort = "По алфавиту";
-    boolean direction = false; // t - возрастанию, f - убыванию
+    boolean direction = false; // true - возрастанию, false - убыванию
 
     public CustomAdapter(Context appContext, Object[] arrayList) {
         this.context = appContext;
@@ -57,6 +59,7 @@ public class CustomAdapter extends BaseAdapter {
         sortThis();
     }
 
+    // Запускает сортировку массива
     private void sortThis(){
         Arrays.sort(userArrayList, new Sorter(sort, direction));
         if (!direction) {
@@ -65,6 +68,7 @@ public class CustomAdapter extends BaseAdapter {
         this.notifyDataSetChanged();
     }
 
+    // Установка типа сортировки, а также направления
     public void setSort(String sort, boolean direction) {
         this.sort = sort;
         this.direction = direction;
@@ -147,6 +151,7 @@ public class CustomAdapter extends BaseAdapter {
 }
 
 
+// кастомный сортировщик
 class Sorter implements Comparator<Object> {
     String sortMethod;
     boolean direction;
@@ -159,8 +164,8 @@ class Sorter implements Comparator<Object> {
     @Override
     public int compare(Object o1, Object o2) {
         User us1 = (User) o1, us2 = (User) o2;
+        // Сортировка по алфавиту
         if (Objects.equals(sortMethod, "По алфавиту")){
-            Log.w("SOOOOORT", "ALPH");
             String s1 = us1.getSurname().toLowerCase() + " " + us1.getName().toLowerCase() + " " + us1.getOtch().toLowerCase();
             String s2 = us2.getSurname().toLowerCase() + " " + us2.getName().toLowerCase() + " " + us2.getOtch().toLowerCase();
 
@@ -175,10 +180,12 @@ class Sorter implements Comparator<Object> {
                 }
             }
             return s1.length() - s2.length();
-        } else if (Objects.equals(sortMethod, "По дате")) {
-            Log.w("SOOOOORT", "DATE");
-            return (int) (us1.getDate() - us2.getDate());
-        } else {
+        } // По дате
+        else if (Objects.equals(sortMethod, "По дате")) {
+            // сдвиг на 3 разряда, т.к. разница не умещается в int
+            return (int) ((us1.getDate() - us2.getDate()) >> 3);
+        } // По сумме
+        else {
             return us1.getSum() - us2.getSum();
         }
     }

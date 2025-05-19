@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Random;
 
+// Активность просмотра пользователя
 public class PersonActivity extends AppCompatActivity {
     User user;
     ImageView imageView;
@@ -66,25 +67,15 @@ public class PersonActivity extends AppCompatActivity {
 
         backBtn.setOnClickListener(v -> finish());
 
-        deleteBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new AlertDialog.Builder(mContext).setTitle("Подтверждение удаления").
-                        setMessage("Вы уверены, что хотите удалить данные пользователя?")
-                        .setNegativeButton("Отмена", null)
-                        .setPositiveButton("Удалить", (dialog, which) -> {
-                            dbConnector.delete(user.getId());
-                            Toast.makeText(mContext, "Успешно удалено", Toast.LENGTH_SHORT).show();
-                            finish();
-                            ;})
-                        .setCancelable(false)
-                        .show();
-
-            }
-        });
-
-
-
-
+        deleteBtn.setOnClickListener(v -> new AlertDialog.Builder(mContext).setTitle("Подтверждение удаления").
+                setMessage("Вы уверены, что хотите удалить данные пользователя?")
+                .setNegativeButton("Отмена", null)
+                .setPositiveButton("Удалить", (dialog, which) -> {
+                    dbConnector.delete(user.getId());
+                    Toast.makeText(mContext, "Успешно удалено", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .setCancelable(false)
+                .show());
     }
 }

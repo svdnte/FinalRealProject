@@ -13,13 +13,16 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
+
+// Класс для создания бэкапов
 public class DatabaseAutoBackupManager {
-    private static final String TAG = "DbBackupManager";
-    private static final String BACKUP_DIR_NAME = "backups";
-    private static final int MAX_BACKUPS = 3; // Храним 3 последних бэкапа
+    private final String TAG = "DbBackupManager";
+    private final String BACKUP_DIR_NAME = "backups";
+    private final int MAX_BACKUPS = 3; // Храним 3 последних бэкапа
 
     private final Context context;
     private final String databaseName;
+    private File backupDirectory;
 
     public DatabaseAutoBackupManager(Context context, String databaseName) {
         this.context = context.getApplicationContext();
@@ -28,31 +31,32 @@ public class DatabaseAutoBackupManager {
 
     public void executeAutoBackup() {
         try {
-            // 1. Получаем исходный файл БД
+            // Получаем исходный файл БД
             File sourceDb = context.getDatabasePath(databaseName);
             if (!sourceDb.exists()) {
                 Log.e(TAG, "Source DB file not found: " + sourceDb.getPath());
                 return;
             }
 
-            // 2. Создаем целевую директорию
+            // Создаем целевую директорию
             File backupDir = createBackupDirectory();
+            backupDirectory = backupDir;
             if (backupDir == null) {
                 Log.e(TAG, "Failed to create backup directory");
                 return;
             }
 
-            // 3. Генерируем имя файла с датой
+            // Генерируем имя файла с датой
             String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
                     .format(new Date());
             String backupFileName = databaseName.replace(".db", "") + "_" + timestamp + ".db";
 
-            // 4. Копируем файл
+            // Копируем файл
             File backupFile = new File(backupDir, backupFileName);
             copyDatabaseFile(sourceDb, backupFile);
             Log.i(TAG, "Backup created: " + backupFile.getAbsolutePath());
 
-            // 5. Очищаем старые бэкапы
+            // Очищаем старые бэкапы
             cleanupOldBackups(backupDir);
 
         } catch (Exception e) {
@@ -84,14 +88,17 @@ public class DatabaseAutoBackupManager {
         }
     }
 
-    private void cleanupOldBackups(File backupDir) {
-        File[] backups = backupDir.listFiles((dir, name) ->
+    private File[] getBackupsArray(){
+        File[] backups = backupDirectory.listFiles((dir, name) ->
                 name.startsWith(databaseName.replace(".db", "")) && name.endsWith(".db"));
+        Arrays.sort(backups, (f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()));
+        return backups;
+    }
+
+    private void cleanupOldBackups(File backupDir) {
+        File[] backups = getBackupsArray();
 
         if (backups != null && backups.length > MAX_BACKUPS) {
-            // Сортируем по дате изменения (старые сначала)
-            Arrays.sort(backups, (f1, f2) -> Long.compare(f1.lastModified(), f2.lastModified()));
-
             // Удаляем лишние бэкапы
             for (int i = 0; i < backups.length - MAX_BACKUPS; i++) {
                 if (!backups[i].delete()) {
@@ -99,5 +106,11 @@ public class DatabaseAutoBackupManager {
                 }
             }
         }
+    }
+
+    // Получить самое новое сохранение
+    public File getLatestBackup(){
+        File[] backups = getBackupsArray();
+        return backups[backups.length - 1];
     }
 }

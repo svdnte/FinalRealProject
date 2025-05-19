@@ -21,6 +21,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 import java.util.Date;
 
+
+// Активность создания пользователя
 public class AddActivity extends AppCompatActivity {
     Button backButton, saveButton;
     EditText surnameEdit, nameEdit, otchEdit, sumEdit, infoEdit;
@@ -135,6 +137,7 @@ public class AddActivity extends AppCompatActivity {
         });
     }
 
+    // Очистить все поля
     private void clearAll(){
         nameEdit.setText("");
         surnameEdit.setText("");

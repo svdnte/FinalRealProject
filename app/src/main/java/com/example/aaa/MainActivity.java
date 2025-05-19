@@ -10,7 +10,6 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.util.Log;
 import android.view.View;
 
 import androidx.appcompat.widget.SwitchCompat;
@@ -34,19 +33,19 @@ import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.security.Permissions;
-import java.security.acl.Permission;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+    private DatabaseAutoBackupManager dbm;
     SearchView searchView;
     ListView listView;
     DBUsers dbConnector;
@@ -74,7 +73,9 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.toolbar);
 
-//        new DatabaseAutoBackupManager(this, "database.db").executeAutoBackup();
+        dbm = new DatabaseAutoBackupManager(this, "database.db");
+        new Thread(() -> dbm.executeAutoBackup()).start();
+
 
         mContext = this;
         dbConnector = new DBUsers(this);
@@ -96,12 +97,13 @@ public class MainActivity extends AppCompatActivity {
         sumText.setText(String.valueOf(customAdapter.getSum()));
         lenText.setText(String.valueOf(customAdapter.getLength()));
 
-
         Intent intent = new Intent(this, AddActivity.class);
+
+
+        // Настройка листенеров и адаптеров
 
         binding.fab.setOnClickListener(view -> {
             startActivity(intent);
-            updateList();
         });
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -174,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
 
             return true;
         });
+
         deleteBtn.setOnClickListener(view -> {
             new AlertDialog.Builder(mContext).setTitle("Подтверждение удаления").
                     setMessage("Вы уверены, что хотите удалить данные пользователя?")
@@ -221,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    // Обновляем list view свежими данными
     private void updateList() {
         customAdapter.setArrayMyData(dbConnector.selectAll());
         customAdapter.notifyDataSetChanged();
@@ -243,11 +247,9 @@ public class MainActivity extends AppCompatActivity {
         lenText.setText(String.valueOf(customAdapter.getLength()));
     }
 
+    // Меню с тремя точками
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
@@ -256,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.action_save_db){
             downloadDbFile();
         } else if (id == R.id.action_export_db){
+            exportDb();
         }
 
         return super.onOptionsItemSelected(item);
@@ -281,7 +284,8 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("application/x-sqlite3"); // MIME type для .db файлов
-            intent.putExtra(Intent.EXTRA_TITLE, "backup.db");
+            intent.putExtra(Intent.EXTRA_TITLE, "backup " + new SimpleDateFormat("HH:mm dd-MM", Locale.getDefault())
+                    .format(new Date()) + ".db");
 
             // Запускаем активность для выбора места сохранения
             startActivityForResult(intent, REQUEST_CODE_SAVE_DB);
@@ -335,5 +339,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void exportDb(){
+        Uri uri = FileProvider.getUriForFile(
+                mContext,
+                "com.example.aaa.provider",
+                dbm.getLatestBackup()
+        );
+        shareDbFile(uri);
     }
 }

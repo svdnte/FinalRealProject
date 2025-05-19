@@ -2,6 +2,7 @@ package com.example.aaa;
 
 import java.io.Serializable;
 
+// Без комментариев
 public class User implements Serializable {
     private long id, date;
     private int anon, sum, meth;
