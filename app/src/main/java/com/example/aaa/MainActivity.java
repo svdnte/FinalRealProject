@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -72,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
+
+//        new DatabaseAutoBackupManager(this, "database.db").executeAutoBackup();
 
         mContext = this;
         dbConnector = new DBUsers(this);
@@ -188,6 +191,25 @@ public class MainActivity extends AppCompatActivity {
                         ;})
                     .setCancelable(false)
                     .show();
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            void pattern(){
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+            @Override
+            public void handleOnBackPressed() {
+                if (selectedMenuWorking) {
+                    customAdapter.clearSelected();
+                    selectedMenuWorking = false;
+                    switcher.setDisplayedChild(0);
+                    customAdapter.notifyDataSetChanged();
+
+                } else {
+                    pattern();
+                }
+            }
         });
     }
 
@@ -307,12 +329,11 @@ public class MainActivity extends AppCompatActivity {
         shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         shareIntent.putExtra(Intent.EXTRA_SUBJECT, "Экспорт базы данных");
-        shareIntent.putExtra(Intent.EXTRA_TEXT, "Прикреплен файл базы данных приложения");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, "Файл базы данных");
 
         startActivity(Intent.createChooser(shareIntent, "Поделиться базой данных"));
     }
 
     private void exportDb(){
-
     }
 }
