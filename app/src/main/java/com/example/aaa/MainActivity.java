@@ -219,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         updateList();
-        sumText.setText(String.valueOf(customAdapter.getSum()));
+        sumText.setText(customAdapter.getSum() + " р.");
         lenText.setText(String.valueOf(customAdapter.getLength()));
         super.onResume();
     }
@@ -237,7 +237,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
@@ -252,10 +251,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        } else if (id == R.id.action_save_db){
+        if (id == R.id.action_save_db){
             downloadDbFile();
         } else if (id == R.id.action_export_db){
             exportDb();
@@ -301,7 +297,6 @@ public class MainActivity extends AppCompatActivity {
             if (data != null && data.getData() != null) {
                 Uri destinationUri = data.getData();
                 copyDatabaseToDestination(destinationUri);
-                shareDbFile(destinationUri);
             }
         }
     }
@@ -339,6 +334,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void exportDb(){
+        dbm.executeAutoBackup();
         Uri uri = FileProvider.getUriForFile(
                 mContext,
                 "com.example.aaa.provider",

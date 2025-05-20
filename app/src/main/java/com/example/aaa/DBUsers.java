@@ -82,29 +82,42 @@ public class DBUsers {
         String[] args = request.split(" ");
         Set<User> solutions = new HashSet<>();
 
-        for (String arg : args) {
-            Cursor mCursor = database.query(TABLE_NAME, null, COLUMN_SURNAME +
-                            " LIKE \"" + arg + "%\"" + " OR " + COLUMN_NAME + " LIKE \"" + arg + "%\""
-                            + " OR " + COLUMN_OTCH + " LIKE \"" + arg + "%\"", null, null,
-                    null, null);
+        Cursor mCursor;
 
-            mCursor.moveToFirst();
-            if (!mCursor.isAfterLast()) {
-                do {
-                    long id = mCursor.getLong(NUM_COLUMN_ID);
-                    int anon = mCursor.getInt(NUM_COLUMN_ANON);
-                    String surname = mCursor.getString(NUM_COLUMN_SURNAME);
-                    String name = mCursor.getString(NUM_COLUMN_NAME);
-                    String otch = mCursor.getString(NUM_COLUMN_OTCH);
-                    long date = mCursor.getLong(NUM_COLUMN_DATE);
-                    int sum = mCursor.getInt(NUM_COLUMN_SUM);
-                    String info = mCursor.getString(NUM_COLUMN_INFO);
-                    int meth = mCursor.getInt(NUM_COLUMN_METHOD);
-                    solutions.add(new User(id, anon, surname, name, otch, date, sum, info, meth));
-                } while (mCursor.moveToNext());
-            }
-            mCursor.close();
+        if (args.length == 3) {
+            mCursor = database.query(TABLE_NAME, null, COLUMN_SURNAME +
+                            " LIKE \"" + args[0] + "%\"" + " AND " + COLUMN_NAME + " LIKE \"" + args[1] + "%\""
+                            + " AND " + COLUMN_OTCH + " LIKE \"" + args[2] + "%\"", null, null,
+                    null, null);
+        } else if (args.length == 2) {
+            mCursor = database.query(TABLE_NAME, null, COLUMN_SURNAME +
+                            " LIKE \"" + args[0] + "%\"" + " AND " + COLUMN_NAME + " LIKE \"" + args[1] + "%\""
+                            + " OR " + COLUMN_OTCH + " LIKE \"" + args[1] + "%\"", null, null,
+                    null, null);
+        } else {
+            mCursor = database.query(TABLE_NAME, null, COLUMN_SURNAME +
+                            " LIKE \"" + args[0] + "%\"" + " OR " + COLUMN_NAME + " LIKE \"" + args[0] + "%\""
+                            + " OR " + COLUMN_OTCH + " LIKE \"" + args[0] + "%\"", null, null,
+                    null, null);
         }
+
+        mCursor.moveToFirst();
+        if (!mCursor.isAfterLast()) {
+            do {
+                long id = mCursor.getLong(NUM_COLUMN_ID);
+                int anon = mCursor.getInt(NUM_COLUMN_ANON);
+                String surname = mCursor.getString(NUM_COLUMN_SURNAME);
+                String name = mCursor.getString(NUM_COLUMN_NAME);
+                String otch = mCursor.getString(NUM_COLUMN_OTCH);
+                long date = mCursor.getLong(NUM_COLUMN_DATE);
+                int sum = mCursor.getInt(NUM_COLUMN_SUM);
+                String info = mCursor.getString(NUM_COLUMN_INFO);
+                int meth = mCursor.getInt(NUM_COLUMN_METHOD);
+                solutions.add(new User(id, anon, surname, name, otch, date, sum, info, meth));
+            } while (mCursor.moveToNext());
+        }
+        mCursor.close();
+
         solutions.toArray();
         return solutions.toArray();
     }

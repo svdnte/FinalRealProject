@@ -25,7 +25,7 @@ public class PersonActivity extends AppCompatActivity {
     User user;
     ImageView imageView;
     TextView fioEdit, sumEdit, dateEdit, methodEdit, infoEdit;
-    Button changeBtn, deleteBtn, backBtn;
+    Button deleteBtn, backBtn;
     DBUsers dbConnector;
     Context mContext;
 
@@ -46,7 +46,6 @@ public class PersonActivity extends AppCompatActivity {
         dateEdit = findViewById(R.id.datePersonEdit);
         methodEdit = findViewById(R.id.methodPersonEdit);
         infoEdit = findViewById(R.id.infoPersonEdit);
-        changeBtn = findViewById(R.id.editPersonButton);
         deleteBtn = findViewById(R.id.deletePersonButton);
         backBtn = findViewById(R.id.backPersonActivity);
 
